@@ -16,12 +16,15 @@ def interval_scraper():
     def is_in_allowed_time(now, start_time, end_time):
         if start_time <= end_time:  # Простой случай (например, 9:00 - 18:00)
             return start_time <= now < end_time
+        else:
+            return now >= start_time or now < end_time
 
 
     # Функция рассчитывает количество секунд до целевого времени.
     def get_seconds_until(target_time, now_time):
         if target_time > now_time:
-            return (target_time - now_time).total_seconds()
+            return (datetime.datetime.combine(datetime.date.today(), target_time) -
+                    datetime.datetime.combine(datetime.date.today(), now_time)).total_seconds()
             # Переход через полночь
         else:
             tomorrow = datetime.timedelta(days=1)
@@ -41,7 +44,7 @@ def interval_scraper():
     else:
 
         # Задается интервал опроса scrape_item_prices данных на сайте в рабочие дни.
-        start_allow = datetime.time(6, 50)
+        start_allow = datetime.time(7, 15)
         end_allow = datetime.time(23, 45)
         now = datetime.datetime.now().time()
         if is_in_allowed_time(now, start_allow, end_allow):
@@ -50,7 +53,7 @@ def interval_scraper():
         else:
             # Рассчитываем время до начала следующего разрешенного периода
             seconds_to_wait = get_seconds_until(start_allow, now)
-            print(f"Программа будет ждать до {start_allow} следующего дня когда в запрашиваемой таблице появятся"
+            print(f"Программа будет ждать до {start_allow} следующего периода когда в запрашиваемой таблице появятся"
                   f" свежие данные.")
             return seconds_to_wait
 
@@ -105,8 +108,8 @@ def scrape_item_prices(url):
             print("Данные собраны.")
             time.sleep(120)
         except Exception as e:
-            print(f"Произошла ошибка: {e}. Повторный запрос будет через 5 минут.")
-            time.sleep(360)  # Пауза в случае ошибки
+            print(f"Произошла ошибка: {e}. Повторный запрос будет через 2 минуты.")
+            time.sleep(120)  # Пауза в случае ошибки
 
 
 url = 'https://smart-lab.ru/q/shares/?ysclid=m8iv2muort794765457'
