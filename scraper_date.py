@@ -38,9 +38,10 @@ def interval_scraper():
         next_monday_dt = datetime.datetime.combine(date_next_monday, datetime.time(6, 50, 0))
         time_before_monday = (next_monday_dt - now).total_seconds()
         if time_before_monday > 0:
-            print(f"Программа будет ждать до понедельника, {next_monday_dt} когда в запрашиваемой таблице появятся"
-                  f" свежие данные.")
-            return time_before_monday
+            s = (f"Программа будет ждать до понедельника, {next_monday_dt} когда в запрашиваемой таблице появятся"
+                 f" свежие данные.")
+            print(s)
+            return time_before_monday, s
     else:
 
         # Задается интервал опроса scrape_item_prices данных на сайте в рабочие дни.
@@ -48,49 +49,43 @@ def interval_scraper():
         end_allow = datetime.time(23, 45)
         now = datetime.datetime.now().time()
         if is_in_allowed_time(now, start_allow, end_allow):
-            print(f"Разрешен запрос данных")
-            return 0
+            print("Разрешен запрос данных")
+            s = "Разрешен запрос данных"
+            return 0, s
         else:
             # Рассчитываем время до начала следующего разрешенного периода
             seconds_to_wait = get_seconds_until(start_allow, now)
-            print(f"Программа будет ждать до {start_allow} следующего периода когда в запрашиваемой таблице появятся"
-                  f" свежие данные.")
-            return seconds_to_wait
+            s = (f"Программа будет ждать до {start_allow} следующего периода когда в запрашиваемой таблице появятся "
+                 f"свежие данные.")
+            print(s)
+            return seconds_to_wait,s
 
+
+# Функция создания файла date.csv и записи в него данных запроса.
+def date_csv(data1, data2, data3):
+    path_data_csv = os.path.join(os.getcwd(), 'date.csv')
+    if not os.path.isfile(path_data_csv):
+        with open('date.csv', 'w', newline='', encoding='utf-8') as file_csv:
+            csvwriter = csv.writer(file_csv)
+            csvwriter.writerow(['Name', 'Price', 'Datetime'])
+            csvwriter.writerow([data1, data2, data3])
+    else:
+        try:
+            with open('date.csv', 'a', newline='', encoding='utf-8') as file_csv:
+                csvwriter = csv.writer(file_csv)
+                csvwriter.writerow([data1, data2, data3])
+        except FileNotFoundError:
+            print("Ошибка: Файл не найден!")
 
 # Функция сбора данных с сайта.
-def scrape_item_prices(url):
-    list_name=['LKOH']
-    options = webdriver.EdgeOptions()
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--headless')
-    time.sleep(interval_scraper())
-    driver = webdriver.Edge( options=options)
-    driver.get(url)
-    print("page loaded")
-
-
-    # Функция создания файла date.csv и записи в него данных запроса.
-    def date_csv(data1, data2, data3):
-        path_data_csv = os.path.join(os.getcwd(), 'date.csv')
-        if not os.path.isfile(path_data_csv):
-            with open('date.csv', 'w', newline='', encoding='utf-8') as file_csv:
-                csvwriter = csv.writer(file_csv)
-                csvwriter.writerow(['Name', 'Price', 'Datetime'])
-                csvwriter.writerow([data1, data2, data3])
-        else:
-            try:
-                with open('date.csv', 'a', newline='', encoding='utf-8') as file_csv:
-                    csvwriter = csv.writer(file_csv)
-                    csvwriter.writerow([data1, data2, data3])
-            except FileNotFoundError:
-                print("Ошибка: Файл не найден!")
-
+def scrape_item_prices():
+    list_name = ['LKOH']
+    time.sleep(interval_scraper()[0])
     # Запрос и выборка полученных данных для записи в файл
     while True:
         try:
-            driver.get(url)
+            driver.refresh()
+            print("Страница обновлена")
             item_element = driver.find_elements(By.XPATH,"//div[2]/div[2]/div[1]/div[2]/div/div/div/table/tbody/tr")
             for item in item_element:
                 s = item.text
@@ -105,12 +100,23 @@ def scrape_item_prices(url):
                                 today = date.today()
                                 d_t = f'{today} {i[0:5]}'
                                 date_csv(name, price, d_t)
-            print("Данные собраны.")
-            time.sleep(120)
+                                print("Данные собраны.")
+                                return name,price,d_t
         except Exception as e:
-            print(f"Произошла ошибка: {e}. Повторный запрос будет через 2 минуты.")
-            time.sleep(120)  # Пауза в случае ошибки
+            print(f"Произошла ошибка: {e}. Повторный запрос будет через 4 минуты.")
+            time.sleep(240)  # Пауза в случае ошибки
 
 
 url = 'https://smart-lab.ru/q/shares/?ysclid=m8iv2muort794765457'
-scrape_item_prices(url)
+options = webdriver.EdgeOptions()
+options.add_argument('--no-sandbox')
+options.add_argument('--disable-dev-shm-usage')
+options.add_argument('--headless')
+driver = webdriver.Edge( options=options)
+driver.get(url)
+
+if __name__ == '__main__':
+    while True:
+        time.sleep(interval_scraper()[0])
+        scrape_item_prices()
+        time.sleep(120)
