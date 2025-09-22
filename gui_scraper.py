@@ -75,9 +75,10 @@ def main(page: ft.Page):
     t3 = ft.Text('   Статус планировщика', color='blue')
     t4 = ft.Text('')
     t5=ft.Text('')
+    t6=ft.Text('   Возможность отправки запроса', color='blue')
 
 
-    page.add(ft.Row([b,t]),ft.Row([b1,t1]),ft.Row([b2,t2]), ft.Row([t3,t4]), ft.Row([t5]))
+    page.add(ft.Row([b,t]),ft.Row([b1,t1]),ft.Row([b2,t2]), ft.Row([t3,t4]), ft.Row([t6,t5]))
 
 if __name__ == '__main__':
     ft.app(main)
