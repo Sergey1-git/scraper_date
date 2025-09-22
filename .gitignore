@@ -205,4 +205,5 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
-.yr_scraper_date.bat
+/yr_scraper_date.bat
+/gui.bat
